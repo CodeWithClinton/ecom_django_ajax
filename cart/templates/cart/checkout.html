@@ -1,0 +1,145 @@
+{% extends 'cart/base.html' %}
+{% block content %}
+
+<div class = 'container'>
+    <div class = 'row'>
+
+<!-- Shipping-Form Section -->
+
+        <div class = 'col-md-6'>
+          <div class="uk-width-xlarge uk-margin">
+              <div class="uk-card uk-card-small uk-card-default uk-card-body">
+                  <form class="row g-3" id ='shipping-form'>
+                  
+                  <div id = 'shippingInfo'>
+                      <h2>You are almost done shopping!!</h2>
+                  </div>
+                  
+                  <div id="paypal-button-container"></div>
+
+                </form>
+                
+                
+              </div>
+          </div>
+      </div>
+
+
+
+
+      <!-- Cart Section -->
+
+
+      <div class = 'col-md-6'>
+          <div class="uk-width-xlarge uk-margin">
+              <div class="uk-card uk-card-small uk-card-default uk-card-body"><table class="table">
+                  <thead>
+                    <tr>
+                      
+                      <h2>Order Summary</h2>
+                      <h3><strong>Total: ${{cart.grandtotal|floatformat:'2'}}</strong><h3></h3>
+                    </tr>
+                  </thead>
+                  <tbody>
+                   
+                    {% for item in cartitems %}
+                    <tr>
+                      
+                      <td scope="row"><div id = "cart_image"><img src = '{{item.product.image.url}}'></div></td>
+                      <td><h3>{{item.product.name}}</h3></td>
+                      <td><h3>x{{item.quantity}}</h3></td>
+                      <td><h3>${{item.product.price}}</h3></td>
+                      <td><h3></h3></td>
+                      <td><h3>${{item.subtotal}}</h3></td>
+                    </tr>
+                   {% endfor %}
+                    
+                  </tbody>
+                </table></div></div>
+
+          
+      </div>
+
+
+
+      
+
+    </div>
+</div>
+
+
+
+
+    <!-- Include the PayPal JavaScript SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=Adh8N0QDhyBTaQWh54Bmds8OoW49RaGEkuvQdD2vqgptO9rqwhMeKd0IL42lX3eJsbz9ewywzKZFRofh&currency=USD"></script>
+
+    <script>
+        // Render the PayPal button into #paypal-button-container
+        let total = "{{cart.grandtotal}}"
+        console.log(total)
+        paypal.Buttons({
+
+            // Set up the transaction
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: parseFloat(total).toFixed(2)
+                        }
+                    }]
+                });
+            },
+
+            // Finalize the transaction
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(orderData) {
+                    // Successful capture! For demo purposes:
+                    console.log('Capture result', orderData, JSON.stringify(orderData, null, 2));
+                    var transaction = orderData.purchase_units[0].payments.captures[0];
+                   
+                    makepayment()
+                    
+
+                    // Replace the above to show a success message within this page, e.g.
+                    // const element = document.getElementById('paypal-button-container');
+                    // element.innerHTML = '';
+                    // element.innerHTML = '<h3>Thank you for your payment!</h3>';
+                    // Or go to another URL:  actions.redirect('thank_you.html');
+                });
+            }
+
+
+        }).render('#paypal-button-container');
+    </script>
+
+    <script>
+      function makepayment(){
+
+        const data = { cart_total: total };
+
+        let url = " {% url 'payment' %} "
+
+fetch(url, {
+  method: 'POST', // or 'PUT'
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRFToken': csrftoken
+  },
+  body: JSON.stringify(data),
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Success:', data);
+  alert('Payment made successfully')
+  window.location.href=" {%url 'store' %} "
+})
+.catch((error) => {
+  console.error('Error:', error);
+});
+
+        
+      }
+      
+    </script>
+
+{% endblock %}

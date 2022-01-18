@@ -70,3 +70,30 @@ def updateQuantity(request):
         }
 
     return JsonResponse(msg, safe=False)
+
+def checkout(request):
+    if request.user.is_authenticated:
+        customer = request.user
+        cart, created = Cart.objects.get_or_create(owner=customer, completed = False)
+        cartitems = cart.cartitems_set.all()
+    else:
+        cart = []
+        cartitems = []
+        cart = {'cartquantity': 0}
+    context = {'cart': cart, 'cartitems': cartitems}
+    return render(request, 'cart/checkout.html', context)
+
+def payment(request):
+    data = json.loads(request.body)
+    if request.user.is_authenticated:
+        customer = request.user
+        cart, created = Cart.objects.get_or_create(owner=customer, completed=False)
+        total = float(data['cart_total'])
+        
+        if total == cart.grandtotal:
+            cart.completed = True
+            cart.save()
+        
+        
+        
+    return JsonResponse('It is working', safe=False)
